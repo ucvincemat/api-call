@@ -44,6 +44,11 @@ h1 {
     margin: 20px 0;
 }
 
+h2 {
+    font-size: 20px;
+    color: darkgray;
+}
+
 .class-selector {
     display: inline-flex;
     align-items: center;
@@ -190,6 +195,21 @@ h1 {
     color: #f6cd05;
 }
 
+.objective {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1em;
+}
+
+.primary span {
+    font-size: 32px;
+}
+
+.secondary span {
+    font-size: 24px;
+}
+
 .hint-cards {
     display: flex;
     justify-content: center;
@@ -235,6 +255,7 @@ h1 {
 }
 
 .card-back {
+    flex-direction: column;
     background-color: #444;
     color: #fff;
     transform: rotateY(180deg);

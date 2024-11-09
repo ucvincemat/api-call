@@ -4,15 +4,43 @@ async function fetchCurrentDeepDive() {
     return response.json();
 }
 
+let DDdata = [];
+let EDDdata = [];
+let missionContentNormal = [];
+let missionContentElite = [];
+
 async function main() {
     try {
         const deepDiveData = await fetchCurrentDeepDive();
 
+        deepDiveData.variants.forEach(variant => {
+            if (variant.type === "Deep Dive") {
+                DDdata.push(variant);
+            } else if (variant.type === "Elite Deep Dive") {
+                EDDdata.push(variant);
+            }
+        });
+
+        DDdata.forEach(variant => {
+            variant.stages.forEach(stage => {
+                missionContentNormal.push(createStageHTML(stage));
+            });
+        });
+
+        EDDdata.forEach(variant => {
+            variant.stages.forEach(stage => {
+                missionContentElite.push(createStageHTML(stage));
+            });
+        });
+
+        console.log("DDdata:", DDdata);
+        console.log("EDDdata:", EDDdata);
+
         const deepDive = deepDiveData.variants.find(variant => variant.type === "Deep Dive");
         const eliteDeepDive = deepDiveData.variants.find(variant => variant.type === "Elite Deep Dive");
 
-        if (deepDive) setBiome(document.getElementById('bg-dd'), deepDive.biome);
-        if (eliteDeepDive) setBiome(document.getElementById('bg-dde'), eliteDeepDive.biome);
+        if (deepDive) setBiome(document.getElementById('biome-dd'), document.getElementById('bg-dd'), deepDive.biome);
+        if (eliteDeepDive) setBiome(document.getElementById('biome-dde'), document.getElementById('bg-dde'), eliteDeepDive.biome);
 
         console.log("Successful Response");
     } catch (error) {
@@ -32,117 +60,213 @@ function nextDeepDiveRefresh() {
 }
 
 function startCountdown() {
-const interval = setInterval(() => {
-    const now = new Date();
-    const target = nextDeepDiveRefresh();
-    const diff = target - now;
+    const interval = setInterval(() => {
+        const now = new Date();
+        const target = nextDeepDiveRefresh();
+        const diff = target - now;
 
-    if (diff <= 0) {
-    clearInterval(interval);
-    startCountdown();
-    } else {
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        if (diff <= 0) {
+            clearInterval(interval);
+            startCountdown();
+        } else {
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    document.getElementById("countdown").textContent =
-        `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById("countdown").textContent =
+                `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+    }, 1000);
+}
+
+function setBiome(subtitle, backdrop, biome) {
+    subtitle.textContent = biome;
+    switch (biome) {
+        case "Azure Weald":
+            backdrop.classList.add('azure');
+            break;
+        case "Crystalline Caverns":
+            backdrop.classList.add('crystalline');
+            break;
+        case "Dense Biozone":
+            backdrop.classList.add('dense');
+            break;
+        case "Fungus Bogs":
+            backdrop.classList.add('fungus');
+            break;
+        case "Glacial Strata":
+            backdrop.classList.add('glacial');
+            break;
+        case "Hollow Bough":
+            backdrop.classList.add('hollow');
+            break;
+        case "Magma Core":
+            backdrop.classList.add('magma');
+            break;
+        case "Radioactive Exclusion Zone":
+            backdrop.classList.add('radioactive');
+            break;
+        case "Salt Pits":
+            backdrop.classList.add('salt');
+            break;
+        case "Sandblasted Corridors":
+            backdrop.classList.add('sandblasted');
+            break;
     }
-}, 1000);
+}
+
+const missionDict = {
+    "Morkite" : "mining_expedition",
+    "Egg" : "egg_hunt",
+    "Well" : "on-site_refining",
+    "Refining" : "on-site_refining",
+    "Mule" : "salvage_operation",
+    "Aquarq" : "point_extraction",
+    "Escort" : "escort_duty",
+    "Dreadnought" : "elimination",
+    "Industrial" : "industrial_sabotage",
+    "Scan" : "deep_scan"
+}
+
+function createStageHTML(stage) {
+    const primaryObjectiveHTML = `
+        <div class="primary objective">
+            <img src="img/missions/${getImageName(stage.primary)}.webp" width="82">
+            <span>${stage.primary}</span>
+        </div>`;
+
+    const secondaryObjectiveHTML = `
+        <div class="secondary objective">
+            <img src="img/missions/${getImageName(stage.secondary)}.webp" width="64">
+            <span>${stage.secondary}</span>
+        </div>`;
+
+    const anomalyHTML = stage.anomaly ? `
+        <div class="anomaly modifier">
+            <img src="img/anomalies/${getImageName(stage.anomaly)}.webp" width="30">
+            <span>${stage.anomaly}</span>
+        </div>` : '';
+
+    const warningHTML = stage.warning ? `
+        <div class="warning modifier">
+            <img src="img/warnings/${getImageName(stage.warning)}.webp" width="30">
+            <span>${stage.warning}</span>
+        </div>` : '';
+
+    return primaryObjectiveHTML + secondaryObjectiveHTML + anomalyHTML + warningHTML;
+}
+
+function getImageName(inputString) {
+    for (const key in missionDict) {
+        if (inputString.toLowerCase().includes(key.toLowerCase())) {
+            return missionDict[key];
+        }
+    }
+    return inputString.toLowerCase().replace(/[\s+()]/g, '_');
 }
 
 startCountdown();
 main();
 
-function setBiome(section, biome) {
+function setBiome(subtitle, backdrop, biome) {
+    subtitle.textContent = biome;
     switch (biome) {
         case "Azure Weald":
-            section.classList.add('azure');
+            backdrop.classList.add('azure');
             break;
         case "Crystalline Caverns":
-            section.classList.add('crystalline');
+            backdrop.classList.add('crystalline');
             break;
         case "Dense Biozone":
-            section.classList.add('dense');
+            backdrop.classList.add('dense');
             break;
         case "Fungus Bogs":
-            section.classList.add('fungus');
+            backdrop.classList.add('fungus');
             break;
         case "Fungus Bogs":
-            section.classList.add('fungus');
+            backdrop.classList.add('fungus');
             break;
         case "Glacial Strata":
-            section.classList.add('glacial');
+            backdrop.classList.add('glacial');
             break;
         case "Hollow Bough":
-            section.classList.add('hollow');
+            backdrop.classList.add('hollow');
             break;
         case "Magma Core":
-            section.classList.add('magma');
+            backdrop.classList.add('magma');
             break;
         case "Radioactive Exclusion Zone":
-            section.classList.add('radioactive');
+            backdrop.classList.add('radioactive');
             break;
         case "Salt Pits":
-            section.classList.add('salt');
+            backdrop.classList.add('salt');
             break;
         case "Salt Pits":
-            section.classList.add('sandblasted');
-        default:
-            //nothing
+            backdrop.classList.add('sandblasted');
     }
 }
 
-/*`<div class="warning modifier">
-    <img src="img/warnings/cave_leech_cluster.webp" width="30">
-    <span>Cave Leech Cluster</span>
-</div>
+const classContentNormal = {
+    driller: [
+        { hint: "Driller Hint 1" },
+        { hint: "Driller Hint 2" },
+        { hint: "Revealing everything..." }
+    ],
+    engineer: [
+        { hint: "Engineer Hint 1" },
+        { hint: "Engineer Hint 2" },
+        { hint: "Revealing everything..." }
+    ],
+    gunner: [
+        { hint: "Gunner Hint 1" },
+        { hint: "Gunner Hint 2" },
+        { hint: "Revealing everything..." }
+    ],
+    scout: [
+        { hint: "Scout Hint 1" },
+        { hint: "Scout Hint 2" },
+        { hint: "Revealing everything..." }
+    ]
+};
 
-<div class="anomaly modifier">
-    <img src="img/anomalies/critical_weakness.webp" width="30">
-    <span>Critical Weakness</span>
-</div>`*/
+const classContentElite = {
+    driller: [
+        { hint: "Driller Hint 1" },
+        { hint: "Driller Hint 2" },
+        { hint: "Revealing everything..." }
+    ],
+    engineer: [
+        { hint: "Engineer Hint 1" },
+        { hint: "Engineer Hint 2" },
+        { hint: "Revealing everything..." }
+    ],
+    gunner: [
+        { hint: "Gunner Hint 1" },
+        { hint: "Gunner Hint 2" },
+        { hint: "Revealing everything..." }
+    ],
+    scout: [
+        { hint: "Scout Hint 1" },
+        { hint: "Scout Hint 2" },
+        { hint: "Revealing everything..." }
+    ]
+};
 
 document.querySelectorAll('.dd-content').forEach(section => {
     const cards = section.querySelectorAll('.card');
     const classSelector = section.querySelector('.class-selector select');
     let currentCardIndex = 0;
-    let finalStageReached = false;
+    let revealed = false;
 
-    const classContent = {
-        driller: [
-            { hint: "Driller Hint 1" },
-            { hint: "Driller Hint 2" },
-            { hint: "Revealing everything..." }
-        ],
-        engineer: [
-            { hint: "Engineer Hint 1" },
-            { hint: "Engineer Hint 2" },
-            { hint: "Revealing everything..." }
-        ],
-        gunner: [
-            { hint: "Gunner Hint 1" },
-            { hint: "Gunner Hint 2" },
-            { hint: "Revealing everything..." }
-        ],
-        scout: [
-            { hint: "Scout Hint 1" },
-            { hint: "Scout Hint 2" },
-            { hint: "Revealing everything..." }
-        ]
-    };
-
-    const missionContent = [
-        "Mission 1",
-        "Mission 2",
-        "Mission 3"
-    ];
+    isElite = section.classList.contains('elite');
+    const classContent = isElite ? classContentElite : classContentNormal;
+    const missionContent = isElite ? missionContentElite : missionContentNormal;
 
     function resetCards() {
         const selectedClass = classSelector.value.toLowerCase();
         currentCardIndex = 0;
-        finalStageReached = false;
+        revealed = false;
 
         cards.forEach((card, index) => {
             card.setAttribute('data-clicked', 'false');
@@ -189,7 +313,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
 
     cards.forEach((card, index) => {
         card.addEventListener('click', () => {
-            if (finalStageReached || card.classList.contains('disabled') || card.getAttribute('data-clicked') === 'true') return;
+            if (revealed || card.classList.contains('disabled') || card.getAttribute('data-clicked') === 'true') return;
             
             classSelector.disabled = true;
 
@@ -203,7 +327,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
                         c.querySelector('.card-inner').classList.remove('flipped');
 
                         setTimeout(() => {
-                            c.querySelector('.card-back').textContent = missionContent[cardIndex];
+                            c.querySelector('.card-back').innerHTML = missionContent[cardIndex];
                         }, 250);
 
                         setTimeout(() => {
@@ -216,7 +340,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
                         }, 750);
                     });
 
-                    finalStageReached = true;
+                    revealed = true;
                     
                     setTimeout(() => {
                         classSelector.disabled = false;
