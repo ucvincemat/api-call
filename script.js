@@ -9,11 +9,137 @@ let EDDdata = [];
 let missionContentNormal = [];
 let missionContentElite = [];
 
+let classContentNormal = {
+    driller: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
+    engineer: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
+    gunner: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
+    scout: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }]
+};
+
+let classContentElite = {
+    driller: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
+    engineer: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
+    gunner: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
+    scout: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }]
+};
+
+function checkDensity(dd, variant) {
+    let score = 0;
+    let swarmmag = false;
+    const content = variant === "Elite Deep Dive" ? classContentElite : classContentNormal;
+
+    dd.stages.forEach(stage => {
+        if (stage.primary.includes("Industrial Sabotage")) score += 3;
+        if (stage.primary.includes("Dreadnought")) score += 2;
+        if (stage.secondary.includes("Dreadnought")) score += 1;
+        if (stage.primary.includes("Mule")) score -= 1;
+        if (stage.warning && stage.warning.includes("Swarmaggedon")) swarmmag = true;
+    });
+
+    if (score > 2) {
+        content["driller"][0].hint = "It smells like expired tuna.";
+        content["engineer"][0].hint = "I feel like calling an orbital strike.";
+        content["gunner"][0].hint = "I hear big guys we need to fight.";
+        content["scout"][0].hint = "It seems like I'm the big shot here.";
+    } else if (score < -1) {
+        content["driller"][0].hint = "It smells like roasted marshmallows.";
+        content["engineer"][0].hint = "I feel like an overpriced lawnmower.";
+        content["gunner"][0].hint = "I hear lots of bugs to squish.";
+        content["scout"][0].hint = "It seems like I might need swarm clear.";
+    } else {
+        content["driller"][0].hint = "It smells like rock and stone.";
+        content["engineer"][0].hint = "I feel like rock and stone.";
+        content["gunner"][0].hint = "I hear rock and stone.";
+        content["scout"][0].hint = "It seems like rock and stone.";
+    }
+
+    if (swarmmag) content["scout"][0].hint = "It seems like I might need swarm clear";
+}
+
+function checkLength(dd, variant) {
+    let score = 0;
+    const content = variant === "Elite Deep Dive" ? classContentElite : classContentNormal;
+    const long = ["Industrial Sabotage", "Escort Duty", "On-Site Refining"];
+    const drag = ["Low Oxygen"];
+    const short = ["Egg", "Aquarq"];
+
+    dd.stages.forEach(stage => {
+        if (long.some(type => stage.primary.includes(type))) score += 2;
+        if (stage.warning && drag.some(type => stage.warning.includes(type))) score += 1;
+        if (short.some(type => stage.primary.includes(type))) score -= 1;
+    });
+
+    let hint;
+    if (score > 2) hint = "<br>We're going overtime..";
+    else if (score < 0) hint = "<br>We're finishing early!";
+    else hint = "<br>We're staying the course.";
+
+    ["driller", "engineer", "gunner", "scout"].forEach(role => {
+        content[role][0].hint += hint;
+    });
+}
+
+function checkDanger(dd, variant) {
+    let score = 0;
+    const content = variant === "Elite Deep Dive" ? classContentElite : classContentNormal;
+    const unplayable = ["Haunted Cave"];
+    const heavyDanger = ["Duck and Cover", "Low Oxygen"];
+    const slightDanger = ["Shield Disruption", "Mactera Plague"];
+
+    const caveleech = ["Cave Leech Cluster"];
+    const heavy = ["Low Oxygen", "Haunted Cave"];
+    const allover = ["Duck and Cover", "Swarmaggedon", "Exploder Infestation"];
+    const short = ["Duck and Cover"];
+
+    let caveleechbool = false, heavybool = false, alloverbool = false, shortbool = false;
+
+    dd.stages.forEach(stage => {
+        if (stage.warning && unplayable.some(type => stage.warning.includes(type))) score += 5;
+        if (stage.warning && heavyDanger.some(type => stage.warning.includes(type))) score += 2;
+        if (stage.warning && slightDanger.some(type => stage.warning.includes(type))) score += 1;
+        if (stage.warning && caveleech.some(type => stage.warning.includes(type))) caveleechbool = true;
+        if (stage.warning && heavy.some(type => stage.warning.includes(type))) heavybool = true;
+        if (stage.warning && allover.some(type => stage.warning.includes(type))) alloverbool = true;
+        if (stage.warning && short.some(type => stage.warning.includes(type))) shortbool = true;
+    });
+
+    if (score > 3) {
+        ["driller", "engineer", "gunner", "scout"].forEach(role => {
+            content[role][1].hint = "Oh no...";
+        });
+    } else if (score < 1) {
+        ["driller", "engineer", "gunner", "scout"].forEach(role => {
+            content[role][1].hint = "I don't like where this is going...";
+        });
+    } else {
+        ["driller", "engineer", "gunner", "scout"].forEach(role => {
+            content[role][1].hint = "It is oddly calm.";
+        });
+    }
+
+    if (caveleechbool) content["scout"][1].hint += "<br>PSA: Look out, look up!";
+    if (heavybool) {
+        ["driller", "engineer", "gunner"].forEach(role => {
+            content[role][1].hint += "<br>The air feels heavy.";
+        });
+    }
+    if (alloverbool) {
+        ["engineer", "gunner", "scout"].forEach(role => {
+            content[role][1].hint += "<br>Oh god, they're all over the place!";
+        });
+    }
+    if (shortbool) content["driller"][1].hint += "<br>I'm too short for this!";
+}
+
 async function main() {
     try {
         const deepDiveData = await fetchCurrentDeepDive();
 
         deepDiveData.variants.forEach(variant => {
+            checkDensity(variant, variant.type);
+            checkLength(variant, variant.type);
+            checkDanger(variant, variant.type);
+
             if (variant.type === "Deep Dive") {
                 DDdata.push(variant);
             } else if (variant.type === "Elite Deep Dive") {
@@ -116,19 +242,6 @@ function setBiome(subtitle, backdrop, biome) {
     }
 }
 
-const missionDict = {
-    "Morkite" : "mining_expedition",
-    "Egg" : "egg_hunt",
-    "Well" : "on-site_refining",
-    "Refining" : "on-site_refining",
-    "Mule" : "salvage_operation",
-    "Aquarq" : "point_extraction",
-    "Escort" : "escort_duty",
-    "Dreadnought" : "elimination",
-    "Industrial" : "industrial_sabotage",
-    "Scan" : "deep_scan"
-}
-
 function createStageHTML(stage) {
     const primaryObjectiveHTML = `
         <div class="primary objective">
@@ -157,6 +270,19 @@ function createStageHTML(stage) {
     return primaryObjectiveHTML + secondaryObjectiveHTML + anomalyHTML + warningHTML;
 }
 
+const missionDict = {
+    "Well" : "on-site_refining",
+    "Morkite" : "mining_expedition",
+    "Egg" : "egg_hunt",
+    "Refining" : "on-site_refining",
+    "Mule" : "salvage_operation",
+    "Aquarq" : "point_extraction",
+    "Escort" : "escort_duty",
+    "Dreadnought" : "elimination",
+    "Industrial" : "industrial_sabotage",
+    "Scan" : "deep_scan"
+}
+
 function getImageName(inputString) {
     for (const key in missionDict) {
         if (inputString.toLowerCase().includes(key.toLowerCase())) {
@@ -180,7 +306,7 @@ function playFlipSound() {
     
     const audio = new Audio(sound);
     
-    audio.playbackRate = Math.random() * 0.5 + 0.9;
+    audio.playbackRate = Math.random() * 0.4 + 0.9;
     
     audio.play();
 }
@@ -222,52 +348,6 @@ function setBiome(subtitle, backdrop, biome) {
             backdrop.classList.add('sandblasted');
     }
 }
-
-const classContentNormal = {
-    driller: [
-        { hint: "Driller Hint 1" },
-        { hint: "Driller Hint 2" },
-        { hint: "Revealing everything..." }
-    ],
-    engineer: [
-        { hint: "Engineer Hint 1" },
-        { hint: "Engineer Hint 2" },
-        { hint: "Revealing everything..." }
-    ],
-    gunner: [
-        { hint: "Gunner Hint 1" },
-        { hint: "Gunner Hint 2" },
-        { hint: "Revealing everything..." }
-    ],
-    scout: [
-        { hint: "Scout Hint 1" },
-        { hint: "Scout Hint 2" },
-        { hint: "Revealing everything..." }
-    ]
-};
-
-const classContentElite = {
-    driller: [
-        { hint: "Driller Hint 1" },
-        { hint: "Driller Hint 2" },
-        { hint: "Revealing everything..." }
-    ],
-    engineer: [
-        { hint: "Engineer Hint 1" },
-        { hint: "Engineer Hint 2" },
-        { hint: "Revealing everything..." }
-    ],
-    gunner: [
-        { hint: "Gunner Hint 1" },
-        { hint: "Gunner Hint 2" },
-        { hint: "Revealing everything..." }
-    ],
-    scout: [
-        { hint: "Scout Hint 1" },
-        { hint: "Scout Hint 2" },
-        { hint: "Revealing everything..." }
-    ]
-};
 
 document.querySelectorAll('.dd-content').forEach(section => {
     const cards = section.querySelectorAll('.card');
@@ -312,7 +392,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
             card.querySelector('.card-inner').classList.remove('flipped');
 
             setTimeout(() => {
-                card.querySelector('.card-back').textContent = classContent[selectedClass][index].hint;
+                card.querySelector('.card-back').innerHTML = classContent[selectedClass][index].hint;
             }, 250);
 
             if (index !== currentCardIndex) {
@@ -324,7 +404,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
         });
     }
 
-    resetCards();
+    setTimeout(() => {resetCards();}, 250);
 
     classSelector.addEventListener('change', resetCards);
 

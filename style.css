@@ -4,13 +4,21 @@
     box-sizing: border-box;
 }
 
+a:link {
+    color: orange;
+}
+
+a:visited {
+    color: orangered;
+}
+
 body {
     background-color: #333;
     color: #fff;
     font-family: Arial, sans-serif;
 }
 
-header {
+header, footer {
     background-color: #222;
     padding: 20px 0;
     text-align: center;
@@ -113,7 +121,7 @@ h2 {
 
 .countdown {
     font-size: 2.5rem;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Source Code Pro', 'Courier New', Courier, monospace;
 }
 
 /* Biomes */
