@@ -4,6 +4,8 @@ async function fetchCurrentDeepDive() {
     return response.json();
 }
 
+let loading = true;
+
 let DDdata = [];
 let EDDdata = [];
 let missionContentNormal = [];
@@ -107,9 +109,9 @@ function checkDanger(dd, variant) {
         ["driller", "engineer", "gunner", "scout"].forEach(role => {
             content[role][1].hint = "Oh no...";
         });
-    } else if (score < 1) {
+    } else if (score > 1) {
         ["driller", "engineer", "gunner", "scout"].forEach(role => {
-            content[role][1].hint = "I don't like where this is going...";
+            content[role][1].hint = "I don't like where this is going..";
         });
     } else {
         ["driller", "engineer", "gunner", "scout"].forEach(role => {
@@ -402,6 +404,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
                 card.style.pointerEvents = 'auto';
             }
         });
+        loading = false;
     }
 
     setTimeout(() => {resetCards();}, 250);
@@ -410,7 +413,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
 
     cards.forEach((card, index) => {
         card.addEventListener('click', () => {
-            if (revealed || card.classList.contains('disabled') || card.getAttribute('data-clicked') === 'true') return;
+            if (loading || revealed || card.classList.contains('disabled') || card.getAttribute('data-clicked') === 'true') return;
             
             classSelector.disabled = true;
 
