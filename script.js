@@ -169,6 +169,22 @@ function getImageName(inputString) {
 startCountdown();
 main();
 
+const flipSound = [
+    'snd/flip1.ogg', 
+    'snd/flip2.ogg', 
+    'snd/flip3.ogg'
+];
+
+function playFlipSound() {
+    const sound = flipSound[Math.floor(Math.random() * flipSound.length)];
+    
+    const audio = new Audio(sound);
+    
+    audio.playbackRate = Math.random() * 0.5 + 0.9;
+    
+    audio.play();
+}
+
 function setBiome(subtitle, backdrop, biome) {
     subtitle.textContent = biome;
     switch (biome) {
@@ -265,6 +281,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
 
     function resetCards() {
         const selectedClass = classSelector.value.toLowerCase();
+        if (currentCardIndex > 0) playFlipSound();
         currentCardIndex = 0;
         revealed = false;
 
@@ -317,6 +334,8 @@ document.querySelectorAll('.dd-content').forEach(section => {
             
             classSelector.disabled = true;
 
+            playFlipSound();
+
             card.setAttribute('data-clicked', 'true');
             card.querySelector('.card-inner').classList.toggle('flipped');
 
@@ -325,6 +344,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
 
                     cards.forEach((c, cardIndex) => {
                         c.querySelector('.card-inner').classList.remove('flipped');
+                        playFlipSound();
 
                         setTimeout(() => {
                             c.querySelector('.card-back').innerHTML = missionContent[cardIndex];
@@ -332,6 +352,7 @@ document.querySelectorAll('.dd-content').forEach(section => {
 
                         setTimeout(() => {
                             c.querySelector('.card-inner').classList.add('flipped');
+                            playFlipSound();
                         }, 500);
 
                         setTimeout(() => {
