@@ -11,18 +11,20 @@ let EDDdata = [];
 let missionContentNormal = [];
 let missionContentElite = [];
 
+const hintDefault = "Could not load hint. Try switching classes and switching back.";
+
 let classContentNormal = {
-    driller: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
-    engineer: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
-    gunner: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
-    scout: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }]
+    driller: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }],
+    engineer: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }],
+    gunner: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }],
+    scout: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }]
 };
 
 let classContentElite = {
-    driller: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
-    engineer: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
-    gunner: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }],
-    scout: [{ hint: "" }, { hint: "" }, { hint: "Revealing everything..." }]
+    driller: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }],
+    engineer: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }],
+    gunner: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }],
+    scout: [{ hint: hintDefault }, { hint: hintDefault }, { hint: "Revealing everything..." }]
 };
 
 function checkDensity(dd, variant) {
@@ -179,10 +181,10 @@ async function main() {
 function nextDeepDiveRefresh() {
     const now = new Date();
     const dayOfWeek = now.getUTCDay();
-    let daysUntilThursday = (4 - dayOfWeek + 7) % 7 || 7;
+    let daysUntilThursday = (4 - dayOfWeek + 7) % 7;
     const target = new Date(now);
     target.setUTCDate(now.getUTCDate() + daysUntilThursday);
-    target.setUTCHours(0, 0, 0, 0);
+    target.setUTCHours(11, 0, 0, 0);
 
     return target;
 }
@@ -407,7 +409,8 @@ document.querySelectorAll('.dd-content').forEach(section => {
         loading = false;
     }
 
-    setTimeout(() => {resetCards();}, 250);
+    resetCards();
+	setTimeout(() => {resetCards();}, 500);
 
     classSelector.addEventListener('change', resetCards);
 
